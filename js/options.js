@@ -1,8 +1,18 @@
 function gdriveAuth(event) {
 	event.preventDefault();
-	chrome.identity.getAuthToken({ 'interactive': true }, function(token) {
-		console.log(token);
-	  // Use the token.
+	GDrive.checkAuth(function(token) {
+		console.log('got gdrive token', token);
+		chrome.storage.sync.set({'storage': 'gdrive'}, refreshStorage);
+		GDrive.checkDataFolder(token);
+	});
+}
+
+function refreshStorage() {
+	chrome.storage.sync.get({'storage': {}}, function(items) {
+		if (items.storage === 'gdrive') {
+			document.getElementById("storePhoto").src = 'ico/gdrive.png';
+			document.getElementById("storeName").innerHTML = 'Гугл-диск';
+		}
 	});
 }
 
@@ -15,6 +25,8 @@ function restoreInfo() {
 			document.getElementById("vkPhoto").src = info.photo_200;
 		});
 	});
+	
+	refreshStorage();
 }
 
 document.getElementById("chooseGdriveBtn").addEventListener("click", gdriveAuth);
