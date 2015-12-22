@@ -23,7 +23,8 @@
 		"identity",
 		"https://ssl.gstatic.com/",
 		"https://www.googleapis.com/",
-		"https://accounts.google.com/"
+		"https://accounts.google.com/",
+		"https://api.vk.com/"
 	],
   
 	"background": {

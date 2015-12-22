@@ -5,7 +5,29 @@
 	<link rel="stylesheet" href="css/bootstrap.min.css">
 </head>
 <body>
-	<div class="container">
+	<div class="container" style="margin-top: 20px">
+		<div class="row" style="display: flex; align-items: center;">
+			<div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+				<div class="thumbnail" style="border: none">
+					<img id="vkPhoto" src="ico/question_mark.png" alt="Фото">
+					<div id="vkName" class="caption text-center">
+					</div>
+				</div>
+			</div>
+			<div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+				<div class="thumbnail" style="border: none">
+					<img src="ico/right_arrow.png" alt="Стрелка">
+				</div>
+			</div>
+			<div class="col-xs-4 col-sm-4 col-md-4 col-lg-4">
+				<div class="thumbnail" style="border: none">
+					<img id="storePhoto" src="ico/question_mark.png" alt="Иконка хранилища">
+					<div id="storeName" class="caption text-center">
+					</div>
+				</div>
+			</div>
+		</div>
+		
 		<div class="panel panel-primary" style="margin-top: 20px">
 			<div class="panel-heading">Где сохраняем?</div>
 			<div class="panel-body">
@@ -23,6 +45,7 @@
 		</div>
 	</div>
 	
+	<script src="js/vk-api.js"></script>
 	<script src="js/options.js"></script>
 </body>
 <html>
