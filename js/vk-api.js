@@ -77,7 +77,7 @@ var VK = (function() {
 					console.log('token expired');
 					chrome.storage.sync.remove('vkaccess_token', checkAuth(function(token) { getUser(token, callback); }));
 				} else {
-					callback(resp);
+					callback && callback(resp);
 				}
 			}
 		};
@@ -85,8 +85,26 @@ var VK = (function() {
 		xhr.send();
 	}
 	
+	function getDialogs(token, offset, count, callback) {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				var resp = JSON.parse(xhr.responseText);
+				if (resp && resp.error && resp.error.error_code === 5) {
+					console.log('token expired');
+					chrome.storage.sync.remove('vkaccess_token', checkAuth(function(token) { getDialogs(token, offset, count, callback); }));
+				} else {
+					callback && callback(resp);
+				}
+			}
+		};
+		xhr.open("GET", vk_api + "messages.getDialogs?offset=" + offset + "&count=" + count + "&v=5.41&access_token=" + token, true);
+		xhr.send();
+	}
+	
 	return {
 		checkAuth: checkAuth,
-		getUser: getUser
+		getUser: getUser,
+		getDialogs: getDialogs
 	}
 }());
