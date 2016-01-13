@@ -4,16 +4,16 @@
 	"name": "VK History Backup",
 	"description": "VK message history backup",
 	"version": "1.0",
-  
+
 	"oauth2": {
 		"client_id": "151577150412-e2nuefi62vgk6tjg686l1n5lnage8p00.apps.googleusercontent.com",
 		"scopes": [
 		  "https://www.googleapis.com/auth/drive"
 		]
 	},
-  
+
 	"icons": { "128": "ico/icon128.png" },
-	
+
 	"key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCXaBUTn1PNjYo8fg+1JBmWBA3bdrn7siqzkY0tYeuNHIWi5ji+6V5Y3QWYRFQh3AFwrZaBItvaM3fsit7K++kDoD67VhYGrGd+mjl4Htmp+/HbzzCQMBJdTdTOvR722+VHmIttzbe/I7GB3a74KvPYfUENONj1tswyKkuXeMgFOQIDAQAB",
 
 	"permissions": [
@@ -26,15 +26,15 @@
 		"https://accounts.google.com/",
 		"https://api.vk.com/"
 	],
-  
+
 	"background": {
-		"scripts": ["js/vk-api.js","js/background.js"],
+		"scripts": ["js/background.min.js"],
 		"persistent": true
 	},
-	
+
 	"browser_action": {
 		"default_icon": "ico/icon38.png"
 	},
-	
+
 	"options_page": "options.html"
 }

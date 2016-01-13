@@ -1,13 +1,15 @@
-var GDrive = (function() {
+"use strict";
+
+const GDrive = (function() {
 	var gdrive_api = "https://www.googleapis.com/drive/v2/";
 	var app_folder = 'VKHistoryBackup';
-	
+
 	function checkAuth(tokenCallback) {
 		chrome.identity.getAuthToken({ 'interactive': true }, function(token) {
 			tokenCallback(token);
 		});
 	}
-	
+
 	function createDataFolder(token, callback) {
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = function() {
@@ -26,7 +28,7 @@ var GDrive = (function() {
 			"mimeType": "application/vnd.google-apps.folder"
 		}));
 	}
-	
+
 	function checkDataFolder(token, callback) {
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = function() {
@@ -45,9 +47,11 @@ var GDrive = (function() {
 		xhr.setRequestHeader('Authorization', 'Bearer ' + token);
 		xhr.send();
 	}
-	
-	return {
-		checkAuth: checkAuth,
-		checkDataFolder: checkDataFolder
+
+	return class GDrive {
+		static checkAuth(tokenCallback) { checkAuth(tokenCallback); }
+		static checkDataFolder(token, callback) { checkDataFolder(token, callback); }
 	}
 }());
+
+export default GDrive;

@@ -1,9 +1,11 @@
-var VK = (function() {
+"use strict";
+
+const VK = (function() {
 	var vkCLientId = 5183677;
 	var vkRequestedScopes = 'messages';
 	var vkAuthenticationUrl  = 'https://oauth.vk.com/authorize?client_id=' + vkCLientId + '&scope=' + vkRequestedScopes + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
 	var vk_api = "https://api.vk.com/method/";
-	
+
 	function displayeAnError(textToShow, errorToShow) {
 		alert(textToShow + '\n' + errorToShow);
 	}
@@ -53,7 +55,7 @@ var VK = (function() {
 			}
 		}
 	}
-	
+
 	function checkAuth(tokenCallback) {
 		chrome.storage.sync.get({'vkaccess_token': {}}, function(items) {
 			if (items.vkaccess_token.length === undefined) {
@@ -67,7 +69,7 @@ var VK = (function() {
 			}
 		});
 	}
-	
+
 	function getUser(token, callback) {
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = function() {
@@ -84,7 +86,7 @@ var VK = (function() {
 		xhr.open("GET", vk_api + "users.get?fields=photo_200&v=5.41&access_token=" + token, true);
 		xhr.send();
 	}
-	
+
 	function getDialogs(token, offset, count, callback) {
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = function() {
@@ -101,10 +103,12 @@ var VK = (function() {
 		xhr.open("GET", vk_api + "messages.getDialogs?offset=" + offset + "&count=" + count + "&v=5.41&access_token=" + token, true);
 		xhr.send();
 	}
-	
-	return {
-		checkAuth: checkAuth,
-		getUser: getUser,
-		getDialogs: getDialogs
+
+	return class VK {
+		static checkAuth(tokenCallback) { checkAuth(tokenCallback); }
+		static getUser(token, callback) { getUser(token, callback); }
+		static getDialogs(token, offset, count, callback) { getDialogs(token, offset, count, callback); }
 	}
-}());
+})();
+
+export default VK;

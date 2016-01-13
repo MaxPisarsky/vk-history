@@ -1,3 +1,14 @@
+"use strict";
+
+import "../css/bootstrap.min.css";
+
+import "../ico/gdrive.png";
+import "../ico/question_mark.png";
+import "../ico/right_arrow.png";
+
+import VK from "./vk-api";
+import GDrive from "./gdrive-api";
+
 function gdriveAuth(event) {
 	event.preventDefault();
 	GDrive.checkAuth(function(token) {
@@ -25,7 +36,7 @@ function restoreInfo() {
 			document.getElementById("vkPhoto").src = info.photo_200;
 		});
 	});
-	
+
 	refreshStorage();
 }
 

@@ -1,3 +1,7 @@
+"use strict";
+
+import VK from "./vk-api";
+
 var pollInterval = 1000 * 60;
 
 function pollHistory() {
