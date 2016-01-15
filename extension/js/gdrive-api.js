@@ -1,8 +1,9 @@
 "use strict";
 
 const GDrive = (function() {
-	var gdrive_api = "https://www.googleapis.com/drive/v2/";
-	var app_folder = 'VKHistoryBackup';
+	const gdrive_api = "https://www.googleapis.com/drive/v2/";
+	const gdrive_upload_api = "https://www.googleapis.com/upload/drive/v2/files";
+	const app_folder = 'VKHistoryBackup';
 
 	function checkAuth(tokenCallback) {
 		chrome.identity.getAuthToken({ 'interactive': true }, function(token) {
@@ -19,7 +20,7 @@ const GDrive = (function() {
 				callback && callback();
 			}
 		};
-		xhr.open("POST", gdrive_api + "files" , true);
+		xhr.open("POST", gdrive_api + "files?visibility=PRIVATE" , true);
 		xhr.setRequestHeader('Authorization', 'Bearer ' + token);
 		xhr.setRequestHeader("Content-type", "application/json");
 		xhr.send(JSON.stringify({
@@ -38,8 +39,9 @@ const GDrive = (function() {
 				if (resp.items.length === 0) {
 					createDataFolder(token, callback);
 				} else {
-					console.log('folder was found');
-					callback && callback();
+					var id = resp && resp.items && resp.items[0] && resp.items[0].id;
+					console.log('folder was found', id);
+					callback && callback(id);
 				}
 			}
 		};
@@ -48,9 +50,46 @@ const GDrive = (function() {
 		xhr.send();
 	}
 
+	function createFile(token, filename, folder, content, callback) {
+		const boundary = '-------314159265358979323846';
+		const delimiter = "\r\n--" + boundary + "\r\n";
+		const close_delim = "\r\n--" + boundary + "--";
+		const contentType = 'application/json';
+
+		var metadata = {
+			"title": filename,
+			"parents": [{"id":folder}],
+			"mimeType": "application/json"
+		};
+
+		var multipartRequestBody =
+				delimiter +
+				'Content-Type: application/json\r\n\r\n' +
+				JSON.stringify(metadata) +
+				delimiter +
+				'Content-Type: ' + contentType + '\r\n' +
+				'\r\n' +
+				content +
+				close_delim;
+
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState == 4 && xhr.status == 200) {
+				var resp = JSON.parse(xhr.responseText);
+				console.log(resp);
+				callback && callback();
+			}
+		};
+		xhr.open("POST", gdrive_upload_api + "?visibility=PRIVATE&uploadType=multipart" , true);
+		xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+		xhr.setRequestHeader("Content-type", 'multipart/related; boundary="' + boundary + '"');
+		xhr.send(multipartRequestBody);
+	}
+
 	return class GDrive {
 		static checkAuth(tokenCallback) { checkAuth(tokenCallback); }
 		static checkDataFolder(token, callback) { checkDataFolder(token, callback); }
+		static createFile(token, filename, folder, content, callback) { createFile(token, filename, folder, content, callback); }
 	}
 }());
 

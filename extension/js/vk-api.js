@@ -1,12 +1,12 @@
 "use strict";
 
 const VK = (function() {
-	var vkCLientId = 5183677;
-	var vkRequestedScopes = 'messages';
-	var vkAuthenticationUrl  = 'https://oauth.vk.com/authorize?client_id=' + vkCLientId + '&scope=' + vkRequestedScopes + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
-	var vk_api = "https://api.vk.com/method/";
+	const vkCLientId = 5183677;
+	const vkRequestedScopes = 'messages';
+	const vkAuthenticationUrl  = 'https://oauth.vk.com/authorize?client_id=' + vkCLientId + '&scope=' + vkRequestedScopes + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
+	const vk_api = "https://api.vk.com/method/";
 
-	function displayeAnError(textToShow, errorToShow) {
+	function displayAnError(textToShow, errorToShow) {
 		alert(textToShow + '\n' + errorToShow);
 	}
 
@@ -31,8 +31,7 @@ const VK = (function() {
 
 	function listenerHandler(authenticationTabId, tokenCallback) {
 		return function tabUpdateListener(tabId, changeInfo) {
-			var vkAccessToken,
-				vkAccessTokenExpiredFlag;
+			var vkAccessToken;
 
 			if (tabId === authenticationTabId && changeInfo.url !== undefined && changeInfo.status === "loading") {
 				if (changeInfo.url.indexOf('oauth.vk.com/blank.html') > -1) {
@@ -43,7 +42,7 @@ const VK = (function() {
 					vkAccessToken = getUrlParameterValue(changeInfo.url, 'access_token');
 
 					if (vkAccessToken === undefined || vkAccessToken.length === undefined) {
-						displayeAnError('vk auth response problem', 'access_token length = 0 or vkAccessToken == undefined');
+						displayAnError('vk auth response problem', 'access_token length = 0 or vkAccessToken == undefined');
 						return;
 					}
 
@@ -70,40 +69,47 @@ const VK = (function() {
 		});
 	}
 
-	function getUser(token, callback) {
-		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = function() {
+	function getXhrHandler(xhr, selfFunction, callback) {
+		return function() {
 			if (xhr.readyState == 4 && xhr.status == 200) {
 				var resp = JSON.parse(xhr.responseText);
 				if (resp && resp.error && resp.error.error_code === 5) {
 					console.log('token expired');
-					chrome.storage.sync.remove('vkaccess_token', checkAuth(function(token) { getUser(token, callback); }));
+					chrome.storage.sync.remove('vkaccess_token', checkAuth(function(token) {
+						setTimeout(function() {
+							selfFunction(token);
+						}, 334);
+					}));
+				} else if (resp && resp.error && resp.error.error_code === 6) {
+					setTimeout(function() {
+						selfFunction();
+					}, 334);
 				} else {
 					callback && callback(resp);
 				}
 			}
-		};
+		}
+	}
+
+	function tokenCurrying(func, args) {
+		return function(token) {
+			if (token !== undefined) {
+				args[0] = token;
+			}
+			func.apply(objects, args);
+		}
+	}
+
+	function getUser(token, callback) {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = getXhrHandler(xhr, tokenCurrying(getUser, arguments), callback);
 		xhr.open("GET", vk_api + "users.get?fields=photo_200&v=5.41&access_token=" + token, true);
 		xhr.send();
 	}
 
 	function getDialogs(token, offset, count, callback) {
 		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				var resp = JSON.parse(xhr.responseText);
-				if (resp && resp.error && resp.error.error_code === 5) {
-					console.log('token expired');
-					chrome.storage.sync.remove('vkaccess_token', checkAuth(function(token) { getDialogs(token, offset, count, callback); }));
-				} else if (resp && resp.error && resp.error.error_code === 6) {
-					setTimeout(function() {
-						getDialogs(token, offset, count, callback);
-					}, 334);
-				} else {
-					callback && callback(resp);
-				}
-			}
-		};
+		xhr.onreadystatechange = getXhrHandler(xhr, tokenCurrying(getDialogs, arguments), callback);
 		xhr.open("GET", vk_api + "messages.getDialogs?offset=" + offset + "&count=" + count + "&v=5.41&access_token=" + token, true);
 		xhr.send();
 	}
@@ -124,21 +130,7 @@ const VK = (function() {
 
 	function getDialog(token, id, offset, count, callback, start_message_id) {
 		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
-				var resp = JSON.parse(xhr.responseText);
-				if (resp && resp.error && resp.error.error_code === 5) {
-					console.log('token expired');
-					chrome.storage.sync.remove('vkaccess_token', checkAuth(function(token) { getDialog(token, id, offset, count, callback, start_message_id); }));
-				} else if (resp && resp.error && resp.error.error_code === 6) {
-					setTimeout(function() {
-						getDialog(token, id, offset, count, callback, start_message_id);
-					}, 334);
-				} else {
-					callback && callback(resp);
-				}
-			}
-		};
+		xhr.onreadystatechange = getXhrHandler(xhr, tokenCurrying(getDialog, arguments), callback);
 		xhr.open("GET", vk_api + "messages.getHistory?" + (start_message_id === undefined ? "rev=1" : "") + (id > 2000000000 ? "&peer_id=" + id : ("&user_id=" + id)) + (start_message_id ? "&start_message_id=" + start_message_id : "") + "&offset=" + ((start_message_id ? -1 : 1) * offset) + "&count=" + count + "&v=5.41&access_token=" + token, true);
 		xhr.send();
 	}
