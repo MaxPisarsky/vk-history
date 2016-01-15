@@ -1,7 +1,5 @@
 "use strict";
 
-import "../css/bootstrap.min.css";
-
 import "../ico/gdrive.png";
 import "../ico/question_mark.png";
 import "../ico/right_arrow.png";
@@ -12,7 +10,6 @@ import GDrive from "./gdrive-api";
 function gdriveAuth(event) {
 	event.preventDefault();
 	GDrive.checkAuth(function(token) {
-		console.log('got gdrive token', token);
 		chrome.storage.sync.set({'storage': 'gdrive'}, refreshStorage);
 		GDrive.checkDataFolder(token);
 	});
@@ -29,7 +26,6 @@ function refreshStorage() {
 
 function restoreInfo() {
 	VK.checkAuth(function(token) {
-		console.log('got token ' + token);
 		VK.getUser(token, function(resp) {
 			var info = resp.response[0];
 			document.getElementById("vkName").innerHTML = info.first_name + ' ' + info.last_name;

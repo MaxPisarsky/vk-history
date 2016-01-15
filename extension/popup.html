@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>VK History Backup</title>
+	<link rel="stylesheet" href="css/extension.min.css">
+</head>
+<body>
+  <div id="optionsBlock" class="container" style="display: none">
+    <button id="openOptionsBtn" type="button" class="btn btn-primary btn-md">Настроить</button>
+  </div>
+
+  <div id="statusBlock" class="container" style="display: none; min-width: 200px; padding-top: 10px;">
+    <div>
+      <p class="text-info" style="text-align:center; height:18px; display:table;">Статус:&nbsp;<span id="status" class="label" style="display: table-cell; vertical-align: middle;"></span></p>
+    </div>
+    <div class="progress">
+      <div id="progress" class="progress-bar progress-bar-info progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="0" style="width:0%">
+      </div>
+    </div>
+  </div>
+
+  <script src="js/popup.min.js"></script>
+</body>
+<html>

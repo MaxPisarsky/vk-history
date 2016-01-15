@@ -8,6 +8,7 @@ var config = {
     entry: {
       background: path.resolve(__dirname, 'extension/js/background.js'),
       options: path.resolve(__dirname, 'extension/js/options.js'),
+      popup: path.resolve(__dirname, 'extension/js/popup.js'),
       extension: path.resolve(__dirname, 'extension/extension.js'),
     },
     output: {
