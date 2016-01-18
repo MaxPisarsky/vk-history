@@ -5,18 +5,22 @@ import GDrive from "./gdrive-api";
 
 const pollInterval = 1000 * 60;
 
-function reportStatus(text, current, total) {
+function reportStatus(text, current, total, lastSyncedId) {
 	chrome.storage.sync.get({'status': {}}, function(items) {
 		var status = {
 			text: text
 		};
 		const newCurrent = current || items.status.current;
 		const newTotal = total || items.status.total;
+		const newSyncedId = lastSyncedId || items.status.lastSyncedId;
 		if (newCurrent) {
 			status.current = newCurrent;
 		}
 		if (newTotal) {
 			status.total = newTotal;
+		}
+		if (newSyncedId) {
+			status.lastSyncedId = newSyncedId;
 		}
 
 		chrome.storage.sync.set({'status': status});
@@ -24,12 +28,11 @@ function reportStatus(text, current, total) {
 	});
 }
 
-function processChunkDialogs(page, chunkHandler, completeAllDialogsCallback) {
+function processChunkDialogs(page, lastSyncedId, chunkHandler, completeAllDialogsCallback) {
 	VK.checkAuth(function(token) {
-		VK.getDialogs(token, page * VK.MAX_DIALOGS_ON_PAGE, VK.MAX_DIALOGS_ON_PAGE, function(resp) {
-			var items = resp && resp.response && resp.response.items;
+		VK.getDialogs(token, page * VK.MAX_DIALOGS_ON_PAGE, VK.MAX_DIALOGS_ON_PAGE, lastSyncedId, function(total, items) {
 			if (items && items.length && chunkHandler) {
-				chunkHandler(page, resp, completeAllDialogsCallback);
+				chunkHandler(page, lastSyncedId, total, items, completeAllDialogsCallback);
 			} else if (completeAllDialogsCallback) {
 				completeAllDialogsCallback();
 			}
@@ -38,8 +41,10 @@ function processChunkDialogs(page, chunkHandler, completeAllDialogsCallback) {
 }
 
 function processAllDialogs() {
-	processChunkDialogs(0, createChunkHandler, function() {
-		reportStatus('done');
+	chrome.storage.sync.get({'status': {}}, function(obj) {
+		processChunkDialogs(obj.status && obj.status.lastSyncedId ? 1 : 0, obj.status && obj.status.lastSyncedId, createChunkHandler, function() {
+			reportStatus('done');
+		});
 	});
 }
 
@@ -56,16 +61,16 @@ function iterateDialogs(arr, count, completeDialogsCallback) {
 	}
 }
 
-function createChunkHandler(page, resp, completeAllDialogsCallback) {
-	return function(page, resp, completeAllDialogsCallback) {
-		reportStatus('sync', undefined, resp.response.count);
+function createChunkHandler(page, lastSyncedId, total, items, completeAllDialogsCallback) {
+	return function(page, lastSyncedId, total, items, completeAllDialogsCallback) {
+		reportStatus('sync', undefined, total);
 
-		iterateDialogs(resp.response.items, page * VK.MAX_DIALOGS_ON_PAGE, function() {
+		iterateDialogs(items, page * VK.MAX_DIALOGS_ON_PAGE, function() {
 			setTimeout(function() {
-				processChunkDialogs(page + 1, createChunkHandler, completeAllDialogsCallback);
+				processChunkDialogs(page + 1, lastSyncedId, createChunkHandler, completeAllDialogsCallback);
 			}, 334);
 		});
-	} (page, resp, completeAllDialogsCallback);
+	} (page, lastSyncedId, total, items, completeAllDialogsCallback);
 }
 
 function processDialogPage(dialogId, page, chunkHandler, completeDialogCallback) {
@@ -89,10 +94,12 @@ function processDialog(dialog, completeDialogCallback) {
 function createDialogHandler(dialogId, page, items, completeDialogCallback) {
 	return function(dialogId, page, items, completeDialogCallback) {
 		const lastDate = items && items.length && items[items.length - 1].date || 0;
+		const lastMsgId = items && items.length && items[items.length - 1].id || 0;
 
 		//setTimeout(function() { processDialogPage(dialogId, page + 1, createDialogHandler, completeDialogCallback); }, 334);
 		GDrive.checkAuth(function(token) {
 			GDrive.createDataFile(token, dialogId + '.' + lastDate + '.json', JSON.stringify(items), function() {
+				reportStatus('sync', undefined, undefined, lastMsgId);
 				setTimeout(function() { processDialogPage(dialogId, page + 1, createDialogHandler, completeDialogCallback); }, 334);
 			});
 		});

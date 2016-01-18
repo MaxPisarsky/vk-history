@@ -43,7 +43,7 @@ function drawSyncStatus(items) {
   progressBar.setAttribute('aria-valuenow', currentDialogs);
   progressBar.setAttribute('aria-valuemax', totalDialogs);
   progressBar.style.width = totalDialogs === 0 ? 0 : (Math.round(currentDialogs * 100 / totalDialogs) + '%');
-  progressBar.innerHTML = currentDialogs + '/' + totalDialogs + ' диалогов';
+  progressBar.innerHTML = currentDialogs + '/' + totalDialogs;
 }
 
 function drawDoneStatus(items) {
@@ -60,7 +60,7 @@ function drawDoneStatus(items) {
   progressBar.setAttribute('aria-valuenow', currentDialogs);
   progressBar.setAttribute('aria-valuemax', totalDialogs);
   progressBar.style.width = totalDialogs === 0 ? 0 : (Math.round(currentDialogs * 100 / totalDialogs) + '%');
-  progressBar.innerHTML = currentDialogs + '/' + totalDialogs + ' диалогов';
+  progressBar.innerHTML = currentDialogs + '/' + totalDialogs;
 }
 
 function showStatusBlock() {

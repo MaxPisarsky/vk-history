@@ -107,10 +107,17 @@ const VK = (function() {
 		xhr.send();
 	}
 
-	function getDialogs(token, offset, count, callback) {
+	function getDialogs(token, offset, count, start_message_id, callback) {
+		if (start_message_id) {
+			offset = -offset;
+		}
 		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = getXhrHandler(xhr, tokenCurrying(getDialogs, arguments), callback);
-		xhr.open("GET", vk_api + "messages.getDialogs?offset=" + offset + "&count=" + count + "&v=5.41&access_token=" + token, true);
+		xhr.onreadystatechange = getXhrHandler(xhr, tokenCurrying(getDialogs, arguments), function(resp) {
+			var items = resp && resp.response && resp.response.items;
+			var total = resp && resp.response && resp.response.count;
+			callback && callback(total, items);
+		});
+		xhr.open("GET", vk_api + "messages.getDialogs?offset=" + offset + "&count=" + count + (start_message_id ? "&start_message_id=" + start_message_id : "") + "&v=5.41&access_token=" + token, true);
 		xhr.send();
 	}
 
@@ -138,7 +145,7 @@ const VK = (function() {
 	return class VK {
 		static checkAuth(tokenCallback) { checkAuth(tokenCallback); }
 		static getUser(token, callback) { getUser(token, callback); }
-		static getDialogs(token, offset, count, callback) { getDialogs(token, offset, count, callback); }
+		static getDialogs(token, offset, count, start_message_id, callback) { getDialogs(token, offset, count, start_message_id, callback); }
 		static getDialogId(dialog) { return getDialogId(dialog); }
 		static getDialog(token, id, offset, count, callback, start_message_id) { getDialog(token, id, offset, count, callback, start_message_id); }
 		static get MAX_DIALOGS_ON_PAGE() { return 200; }
