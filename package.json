@@ -4,7 +4,8 @@
   "description": "Chrome extension for backup VKontakte messages",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack"
+    "build": "webpack",
+    "lint": "eslint . --ext .js || true"
   },
   "repository": {
     "type": "git",
@@ -25,10 +26,13 @@
   "homepage": "https://github.com/skywalkery/vk-history",
   "devDependencies": {
     "babel-core": "^6.4.0",
+    "babel-eslint": "^5.0.0-beta6",
     "babel-loader": "^6.2.1",
     "babel-preset-es2015": "^6.3.13",
     "bird3-purifycss-webpack-plugin": "^1.0.9",
     "css-loader": "^0.23.1",
+    "eslint": "^1.10.3",
+    "eslint-loader": "^1.2.0",
     "extract-text-webpack-plugin": "^1.0.1",
     "file-loader": "^0.8.5",
     "html-minify-loader": "^1.0.0",

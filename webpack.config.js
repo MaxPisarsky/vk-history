@@ -29,6 +29,14 @@ var config = {
         })
     ],
     module: {
+      preLoaders: [
+        {
+          test: /\.js?$/,
+          loaders: ['eslint'],
+          include: path.resolve(__dirname, 'extension/js/'),
+          exclude: [node_modules_dir]
+        }
+      ],
       loaders: [{
           test: /\.js$/,
           exclude: [node_modules_dir],

@@ -1,11 +1,11 @@
-"use strict";
+'use strict';
 
-import "../ico/gdrive.png";
-import "../ico/question_mark.png";
-import "../ico/right_arrow.png";
+import '../ico/gdrive.png';
+import '../ico/question_mark.png';
+import '../ico/right_arrow.png';
 
-import VK from "./vk-api";
-import GDrive from "./gdrive-api";
+import VK from './vk-api';
+import GDrive from './gdrive-api';
 
 function gdriveAuth(event) {
 	event.preventDefault();
@@ -18,8 +18,8 @@ function gdriveAuth(event) {
 function refreshStorage() {
 	chrome.storage.sync.get({'storage': {}}, function(items) {
 		if (items.storage === 'gdrive') {
-			document.getElementById("storePhoto").src = 'ico/gdrive.png';
-			document.getElementById("storeName").innerHTML = 'Гугл-диск';
+			document.getElementById('storePhoto').src = 'ico/gdrive.png';
+			document.getElementById('storeName').innerHTML = 'Гугл-диск';
 		}
 	});
 }
@@ -28,14 +28,14 @@ function restoreInfo() {
 	VK.checkAuth(function(token) {
 		VK.getUser(token, function(resp) {
 			var info = resp.response[0];
-			document.getElementById("vkName").innerHTML = info.first_name + ' ' + info.last_name;
-			document.getElementById("vkPhoto").src = info.photo_200;
+			document.getElementById('vkName').innerHTML = info.first_name + ' ' + info.last_name;
+			document.getElementById('vkPhoto').src = info.photo_200;
 		});
 	});
 
 	refreshStorage();
 }
 
-document.getElementById("chooseGdriveBtn").addEventListener("click", gdriveAuth);
+document.getElementById('chooseGdriveBtn').addEventListener('click', gdriveAuth);
 
 document.addEventListener('DOMContentLoaded', restoreInfo);

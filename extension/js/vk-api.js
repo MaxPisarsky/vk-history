@@ -1,25 +1,25 @@
-"use strict";
+'use strict';
 
 const VK = (function() {
 	const vkCLientId = 5183677;
 	const vkRequestedScopes = 'messages';
 	const vkAuthenticationUrl  = 'https://oauth.vk.com/authorize?client_id=' + vkCLientId + '&scope=' + vkRequestedScopes + '&redirect_uri=http%3A%2F%2Foauth.vk.com%2Fblank.html&display=page&response_type=token';
-	const vk_api = "https://api.vk.com/method/";
+	const vk_api = 'https://api.vk.com/method/';
 
 	function displayAnError(textToShow, errorToShow) {
 		alert(textToShow + '\n' + errorToShow);
 	}
 
 	function getUrlParameterValue(url, parameterName) {
-		var urlParameters  = url.substr(url.indexOf("#") + 1),
-			parameterValue = "",
+		var urlParameters  = url.substr(url.indexOf('#') + 1),
+			parameterValue = '',
 			index,
 			temp;
 
-		urlParameters = urlParameters.split("&");
+		urlParameters = urlParameters.split('&');
 
 		for (index = 0; index < urlParameters.length; index += 1) {
-			temp = urlParameters[index].split("=");
+			temp = urlParameters[index].split('=');
 
 			if (temp[0] === parameterName) {
 				return temp[1];
@@ -33,7 +33,7 @@ const VK = (function() {
 		return function tabUpdateListener(tabId, changeInfo) {
 			var vkAccessToken;
 
-			if (tabId === authenticationTabId && changeInfo.url !== undefined && changeInfo.status === "loading") {
+			if (tabId === authenticationTabId && changeInfo.url !== undefined && changeInfo.status === 'loading') {
 				if (changeInfo.url.indexOf('oauth.vk.com/blank.html') > -1) {
 					authenticationTabId = null;
 					chrome.tabs.onUpdated.removeListener(tabUpdateListener);
@@ -52,7 +52,7 @@ const VK = (function() {
 					});
 				}
 			}
-		}
+		};
 	}
 
 	function checkAuth(tokenCallback) {
@@ -88,7 +88,7 @@ const VK = (function() {
 					callback && callback(resp);
 				}
 			}
-		}
+		};
 	}
 
 	function tokenCurrying(func, args) {
@@ -97,13 +97,13 @@ const VK = (function() {
 				args[0] = token;
 			}
 			func.apply(objects, args);
-		}
+		};
 	}
 
 	function getUser(token, callback) {
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = getXhrHandler(xhr, tokenCurrying(getUser, arguments), callback);
-		xhr.open("GET", vk_api + "users.get?fields=photo_200&v=5.41&access_token=" + token, true);
+		xhr.open('GET', vk_api + 'users.get?fields=photo_200&v=5.41&access_token=' + token, true);
 		xhr.send();
 	}
 
@@ -117,7 +117,7 @@ const VK = (function() {
 			var total = resp && resp.response && resp.response.count;
 			callback && callback(total, items);
 		});
-		xhr.open("GET", vk_api + "messages.getDialogs?offset=" + offset + "&count=" + count + (start_message_id ? "&start_message_id=" + start_message_id : "") + "&v=5.41&access_token=" + token, true);
+		xhr.open('GET', vk_api + 'messages.getDialogs?offset=' + offset + '&count=' + count + (start_message_id ? '&start_message_id=' + start_message_id : '') + '&v=5.41&access_token=' + token, true);
 		xhr.send();
 	}
 
@@ -138,7 +138,7 @@ const VK = (function() {
 	function getDialog(token, id, offset, count, callback, start_message_id) {
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = getXhrHandler(xhr, tokenCurrying(getDialog, arguments), callback);
-		xhr.open("GET", vk_api + "messages.getHistory?" + (start_message_id === undefined ? "rev=1" : "") + (id > 2000000000 ? "&peer_id=" + id : ("&user_id=" + id)) + (start_message_id ? "&start_message_id=" + start_message_id : "") + "&offset=" + ((start_message_id ? -1 : 1) * offset) + "&count=" + count + "&v=5.41&access_token=" + token, true);
+		xhr.open('GET', vk_api + 'messages.getHistory?' + (start_message_id === undefined ? 'rev=1' : '') + (id > 2000000000 ? '&peer_id=' + id : ('&user_id=' + id)) + (start_message_id ? '&start_message_id=' + start_message_id : '') + '&offset=' + ((start_message_id ? -1 : 1) * offset) + '&count=' + count + '&v=5.41&access_token=' + token, true);
 		xhr.send();
 	}
 
@@ -149,7 +149,7 @@ const VK = (function() {
 		static getDialogId(dialog) { return getDialogId(dialog); }
 		static getDialog(token, id, offset, count, callback, start_message_id) { getDialog(token, id, offset, count, callback, start_message_id); }
 		static get MAX_DIALOGS_ON_PAGE() { return 200; }
-	}
+	};
 })();
 
 export default VK;

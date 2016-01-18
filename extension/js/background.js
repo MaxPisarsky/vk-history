@@ -1,7 +1,7 @@
-"use strict";
+'use strict';
 
-import VK from "./vk-api";
-import GDrive from "./gdrive-api";
+import VK from './vk-api';
+import GDrive from './gdrive-api';
 
 const pollInterval = 1000 * 60;
 
@@ -24,7 +24,7 @@ function reportStatus(text, current, total, lastSyncedId) {
 		}
 
 		chrome.storage.sync.set({'status': status});
-		chrome.runtime.sendMessage({type: "status", status: status});
+		chrome.runtime.sendMessage({type: 'status', status: status});
 	});
 }
 
@@ -51,7 +51,7 @@ function processAllDialogs() {
 function iterateDialogs(arr, count, completeDialogsCallback) {
 	if (arr && arr.length) {
 		setTimeout(function() {
-			processDialog(arr.pop(), function(dialogId) {
+			processDialog(arr.pop(), function() {
 				reportStatus('sync', count + 1);
 				iterateDialogs(arr, count + 1, completeDialogsCallback);
 			});
@@ -88,7 +88,7 @@ function processDialogPage(dialogId, page, chunkHandler, completeDialogCallback)
 
 function processDialog(dialog, completeDialogCallback) {
 	const dialogId = VK.getDialogId(dialog);
-	processDialogPage(dialogId, 0, createDialogHandler, completeDialogCallback)
+	processDialogPage(dialogId, 0, createDialogHandler, completeDialogCallback);
 }
 
 function createDialogHandler(dialogId, page, items, completeDialogCallback) {
