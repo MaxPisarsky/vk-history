@@ -5,15 +5,6 @@ import GDrive from "./gdrive-api";
 
 const pollInterval = 1000 * 60;
 
-function pollHistory() {
-	VK.checkAuth(function(token) {
-		VK.getDialogs(token, 0, 200, function(resp) {
-			console.log(resp);
-		});
-	});
-	window.setTimeout(pollHistory, pollInterval);
-}
-
 function reportStatus(text, current, total) {
 	chrome.storage.sync.get({'status': {}}, function(items) {
 		var status = {
@@ -101,10 +92,8 @@ function createDialogHandler(dialogId, page, items, completeDialogCallback) {
 
 		//setTimeout(function() { processDialogPage(dialogId, page + 1, createDialogHandler, completeDialogCallback); }, 334);
 		GDrive.checkAuth(function(token) {
-			GDrive.checkDataFolder(token, function(fid) {
-				GDrive.createFile(token, dialogId + '.' + lastDate + '.json', fid, JSON.stringify(items), function() {
-					setTimeout(function() { processDialogPage(dialogId, page + 1, createDialogHandler, completeDialogCallback); }, 334);
-				});
+			GDrive.createDataFile(token, dialogId + '.' + lastDate + '.json', JSON.stringify(items), function() {
+				setTimeout(function() { processDialogPage(dialogId, page + 1, createDialogHandler, completeDialogCallback); }, 334);
 			});
 		});
 	} (dialogId, page, items, completeDialogCallback);

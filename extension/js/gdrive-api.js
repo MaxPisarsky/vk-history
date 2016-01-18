@@ -5,6 +5,8 @@ const GDrive = (function() {
 	const gdrive_upload_api = "https://www.googleapis.com/upload/drive/v2/files";
 	const app_folder = 'VKHistoryBackup';
 
+	var fid;
+
 	function checkAuth(tokenCallback) {
 		chrome.identity.getAuthToken({ 'interactive': true }, function(token) {
 			tokenCallback(token);
@@ -14,10 +16,12 @@ const GDrive = (function() {
 	function createDataFolder(token, callback) {
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
+			if (xhr.readyState === 4 && xhr.status === 200) {
 				var resp = JSON.parse(xhr.responseText);
 				console.log(resp);
-				callback && callback();
+				var id = resp && resp.id;
+				fid = id;
+				callback && callback(id);
 			}
 		};
 		xhr.open("POST", gdrive_api + "files?visibility=PRIVATE" , true);
@@ -33,7 +37,7 @@ const GDrive = (function() {
 	function checkDataFolder(token, callback) {
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
+			if (xhr.readyState === 4 && xhr.status === 200) {
 				var resp = JSON.parse(xhr.responseText);
 				console.log(resp);
 				if (resp.items.length === 0) {
@@ -41,6 +45,7 @@ const GDrive = (function() {
 				} else {
 					var id = resp && resp.items && resp.items[0] && resp.items[0].id;
 					console.log('folder was found', id);
+					fid = id;
 					callback && callback(id);
 				}
 			}
@@ -74,10 +79,16 @@ const GDrive = (function() {
 
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = function() {
-			if (xhr.readyState == 4 && xhr.status == 200) {
+			if (xhr.readyState === 4 && xhr.status === 200) {
 				var resp = JSON.parse(xhr.responseText);
 				console.log(resp);
 				callback && callback();
+			} else if (xhr.readyState === 4 && xhr.status === 404) {
+				var resp = JSON.parse(xhr.responseText);
+				if (resp && resp.error && resp.error.errors && resp.error.errors.length && resp.error.errors[0].reason === 'notFound') {
+					fid = undefined;
+					createDataFileChecked(token, filename, folder, content, callback);
+				}
 			}
 		};
 		xhr.open("POST", gdrive_upload_api + "?visibility=PRIVATE&uploadType=multipart" , true);
@@ -86,10 +97,20 @@ const GDrive = (function() {
 		xhr.send(multipartRequestBody);
 	}
 
+	function createDataFileChecked(token, filename, content, callback) {
+		if (fid) {
+			createFile(token, filename, fid, content, callback);
+		} else {
+			checkDataFolder(token, function(fid) {
+				createFile(token, filename, fid, content, callback);
+			});
+		}
+	}
+
 	return class GDrive {
 		static checkAuth(tokenCallback) { checkAuth(tokenCallback); }
 		static checkDataFolder(token, callback) { checkDataFolder(token, callback); }
-		static createFile(token, filename, folder, content, callback) { createFile(token, filename, folder, content, callback); }
+		static createDataFile(token, filename, content, callback) { createDataFileChecked(token, filename, content, callback); }
 	}
 }());
 
