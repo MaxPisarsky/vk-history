@@ -3,27 +3,35 @@
 import VK from './vk-api';
 import GDrive from './gdrive-api';
 
-const pollInterval = 1000 * 60;
+const pollInterval = 1000 * 60 * 30;
 
-function reportStatus(text, current, total, lastSyncedId) {
-	chrome.storage.sync.get({'status': {}}, function(items) {
+function reportStatus(text, current, total) {
+	chrome.storage.local.get({'status': {}}, function(items) {
 		var status = {
 			text: text
 		};
 		const newCurrent = current || items.status.current;
 		const newTotal = total || items.status.total;
-		const newSyncedId = lastSyncedId || items.status.lastSyncedId;
 		if (newCurrent) {
 			status.current = newCurrent;
 		}
 		if (newTotal) {
 			status.total = newTotal;
 		}
-		if (newSyncedId) {
-			status.lastSyncedId = newSyncedId;
+
+		status.dialogs = items && items.status && items.status.dialogs || {};
+
+		if (text === 'done') {
+			var maxId = -1;
+			for (var dialogId in status.dialogs) {
+				if (status.dialogs[dialogId] && status.dialogs[dialogId].lastMsgId > maxId) {
+					maxId = status.dialogs[dialogId].lastMsgId;
+				}
+			}
+			status.lastSyncedId = maxId;
 		}
 
-		chrome.storage.sync.set({'status': status});
+		chrome.storage.local.set({'status': status});
 		chrome.runtime.sendMessage({type: 'status', status: status});
 	});
 }
@@ -41,9 +49,10 @@ function processChunkDialogs(page, lastSyncedId, chunkHandler, completeAllDialog
 }
 
 function processAllDialogs() {
-	chrome.storage.sync.get({'status': {}}, function(obj) {
+	chrome.storage.local.get({'status': {}}, function(obj) {
 		processChunkDialogs(obj.status && obj.status.lastSyncedId ? 1 : 0, obj.status && obj.status.lastSyncedId, createChunkHandler, function() {
 			reportStatus('done');
+			setTimeout(function() { processAllDialogs(); }, pollInterval);
 		});
 	});
 }
@@ -73,12 +82,11 @@ function createChunkHandler(page, lastSyncedId, total, items, completeAllDialogs
 	} (page, lastSyncedId, total, items, completeAllDialogsCallback);
 }
 
-function processDialogPage(dialogId, page, chunkHandler, completeDialogCallback) {
+function processDialogPage(dialogId, page, lastSyncedId, chunkHandler, completeDialogCallback) {
 	VK.checkAuth(function(token) {
-		VK.getDialog(token, dialogId, page * VK.MAX_DIALOGS_ON_PAGE, VK.MAX_DIALOGS_ON_PAGE, function(resp) {
-			var items = resp && resp.response && resp.response.items;
+		VK.getDialog(token, dialogId, page * VK.MAX_DIALOGS_ON_PAGE, VK.MAX_DIALOGS_ON_PAGE, lastSyncedId, function(items) {
 			if (items && items.length && chunkHandler) {
-				chunkHandler(dialogId, page, items, completeDialogCallback);
+				chunkHandler(dialogId, page, lastSyncedId, items, completeDialogCallback);
 			} else if (completeDialogCallback) {
 				completeDialogCallback(dialogId);
 			}
@@ -88,22 +96,36 @@ function processDialogPage(dialogId, page, chunkHandler, completeDialogCallback)
 
 function processDialog(dialog, completeDialogCallback) {
 	const dialogId = VK.getDialogId(dialog);
-	processDialogPage(dialogId, 0, createDialogHandler, completeDialogCallback);
+	chrome.storage.local.get({'status': {}}, function(obj) {
+		const lastMsgId = obj && obj.status && obj.status.dialogs && obj.status.dialogs[dialogId] && obj.status.dialogs[dialogId].lastMsgId;
+		const page = lastMsgId ? 1 : 0;
+		processDialogPage(dialogId, page, lastMsgId, createDialogHandler, completeDialogCallback);
+	});
 }
 
-function createDialogHandler(dialogId, page, items, completeDialogCallback) {
-	return function(dialogId, page, items, completeDialogCallback) {
+function createDialogHandler(dialogId, page, lastSyncedId, items, completeDialogCallback) {
+	return function(dialogId, page, lastSyncedId, items, completeDialogCallback) {
 		const lastDate = items && items.length && items[items.length - 1].date || 0;
 		const lastMsgId = items && items.length && items[items.length - 1].id || 0;
 
-		//setTimeout(function() { processDialogPage(dialogId, page + 1, createDialogHandler, completeDialogCallback); }, 334);
 		GDrive.checkAuth(function(token) {
 			GDrive.createDataFile(token, dialogId + '.' + lastDate + '.json', JSON.stringify(items), function() {
-				reportStatus('sync', undefined, undefined, lastMsgId);
-				setTimeout(function() { processDialogPage(dialogId, page + 1, createDialogHandler, completeDialogCallback); }, 334);
+				chrome.storage.local.get({'status': {}}, function(items) {
+					var status = items && items.status || {};
+					if (!status.dialogs) {
+						status.dialogs = {};
+					}
+					if (!status.dialogs[dialogId]) {
+						status.dialogs[dialogId] = {};
+					}
+					status.dialogs[dialogId].lastMsgId = lastMsgId;
+					chrome.storage.local.set({'status': status}, function() {
+						setTimeout(function() { processDialogPage(dialogId, page + 1, lastSyncedId, createDialogHandler, completeDialogCallback); }, 334);
+					});
+				});
 			});
 		});
-	} (dialogId, page, items, completeDialogCallback);
+	} (dialogId, page, lastSyncedId, items, completeDialogCallback);
 }
 
 processAllDialogs();

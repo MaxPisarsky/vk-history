@@ -18,7 +18,6 @@ const GDrive = (function() {
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState === 4 && xhr.status === 200) {
 				var resp = JSON.parse(xhr.responseText);
-				console.log(resp);
 				var id = resp && resp.id;
 				fid = id;
 				callback && callback(id);
@@ -39,12 +38,10 @@ const GDrive = (function() {
 		xhr.onreadystatechange = function() {
 			if (xhr.readyState === 4 && xhr.status === 200) {
 				var resp = JSON.parse(xhr.responseText);
-				console.log(resp);
 				if (resp.items.length === 0) {
 					createDataFolder(token, callback);
 				} else {
 					var id = resp && resp.items && resp.items[0] && resp.items[0].id;
-					console.log('folder was found', id);
 					fid = id;
 					callback && callback(id);
 				}
@@ -82,7 +79,6 @@ const GDrive = (function() {
 			var resp;
 			if (xhr.readyState === 4 && xhr.status === 200) {
 				resp = JSON.parse(xhr.responseText);
-				console.log(resp);
 				callback && callback();
 			} else if (xhr.readyState === 4 && xhr.status === 404) {
 				resp = JSON.parse(xhr.responseText);

@@ -65,7 +65,7 @@ function drawDoneStatus(items) {
 
 function showStatusBlock() {
 	document.getElementById('statusBlock').style.display = 'block';
-	chrome.storage.sync.get({'status': {}}, function(items) {
+	chrome.storage.local.get({'status': {}}, function(items) {
 		const status = items.status.text !== undefined ? items.status.text : 'sync';
 		switch (status) {
 		case 'sync':
@@ -83,11 +83,7 @@ document.getElementById('openOptionsBtn').addEventListener('click', openOptions)
 checkOptions();
 
 chrome.runtime.onMessage.addListener(
-	function(request, sender) {
-		console.log(sender.tab ?
-								'from a content script:' + sender.tab.url :
-								'from the extension');
-		console.log(request);
+	function(request) {
 		if (request.type === 'status' && request.status.text) {
 			switch (request.status.text) {
 			case 'sync':

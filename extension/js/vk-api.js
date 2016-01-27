@@ -47,7 +47,6 @@ const VK = (function() {
 					}
 
 					chrome.storage.sync.set({'vkaccess_token': vkAccessToken}, function () {
-						console.log('vk token saved');
 						tokenCallback(vkAccessToken);
 					});
 				}
@@ -58,12 +57,10 @@ const VK = (function() {
 	function checkAuth(tokenCallback) {
 		chrome.storage.sync.get({'vkaccess_token': {}}, function(items) {
 			if (items.vkaccess_token.length === undefined) {
-				console.log('not found vk token - need auth');
 				chrome.tabs.create({url: vkAuthenticationUrl, selected: true}, function (tab) {
 					chrome.tabs.onUpdated.addListener(listenerHandler(tab.id, tokenCallback));
 				});
 			} else {
-				console.log('found vk token');
 				tokenCallback(items.vkaccess_token);
 			}
 		});
@@ -74,7 +71,6 @@ const VK = (function() {
 			if (xhr.readyState == 4 && xhr.status == 200) {
 				var resp = JSON.parse(xhr.responseText);
 				if (resp && resp.error && resp.error.error_code === 5) {
-					console.log('token expired');
 					chrome.storage.sync.remove('vkaccess_token', checkAuth(function(token) {
 						setTimeout(function() {
 							selfFunction(token);
@@ -96,7 +92,7 @@ const VK = (function() {
 			if (token !== undefined) {
 				args[0] = token;
 			}
-			func.apply(objects, args);
+			func.apply(this, args);
 		};
 	}
 
@@ -129,15 +125,19 @@ const VK = (function() {
 			if (message.chat_id) {
 				dialogId = message.chat_id + 2000000000;
 			}
-			var date = message.date;
-			console.log(dialogId, date);
 		}
 		return dialogId;
 	}
 
 	function getDialog(token, id, offset, count, callback, start_message_id) {
 		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = getXhrHandler(xhr, tokenCurrying(getDialog, arguments), callback);
+		xhr.onreadystatechange = getXhrHandler(xhr, tokenCurrying(getDialog, arguments), function(resp) {
+			var items = resp && resp.response && resp.response.items;
+			if (items && items.length && start_message_id) {
+				items = items.reverse();
+			}
+			callback && callback(items);
+		});
 		xhr.open('GET', vk_api + 'messages.getHistory?' + (start_message_id === undefined ? 'rev=1' : '') + (id > 2000000000 ? '&peer_id=' + id : ('&user_id=' + id)) + (start_message_id ? '&start_message_id=' + start_message_id : '') + '&offset=' + ((start_message_id ? -1 : 1) * offset) + '&count=' + count + '&v=5.41&access_token=' + token, true);
 		xhr.send();
 	}
@@ -147,7 +147,7 @@ const VK = (function() {
 		static getUser(token, callback) { getUser(token, callback); }
 		static getDialogs(token, offset, count, start_message_id, callback) { getDialogs(token, offset, count, start_message_id, callback); }
 		static getDialogId(dialog) { return getDialogId(dialog); }
-		static getDialog(token, id, offset, count, callback, start_message_id) { getDialog(token, id, offset, count, callback, start_message_id); }
+		static getDialog(token, id, offset, count, start_message_id, callback) { getDialog(token, id, offset, count, callback, start_message_id); }
 		static get MAX_DIALOGS_ON_PAGE() { return 200; }
 	};
 })();
