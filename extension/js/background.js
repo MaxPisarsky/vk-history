@@ -38,9 +38,9 @@ function reportStatus(text, current, total) {
 
 function processChunkDialogs(page, lastSyncedId, chunkHandler, completeAllDialogsCallback) {
 	VK.checkAuth(function(token) {
-		VK.getDialogs(token, page * VK.MAX_DIALOGS_ON_PAGE, VK.MAX_DIALOGS_ON_PAGE, lastSyncedId, function(total, items) {
+		VK.getDialogs(token, page * VK.MAX_DIALOGS_ON_PAGE, VK.MAX_DIALOGS_ON_PAGE, lastSyncedId, function(total, items, real_offset) {
 			if (items && items.length && chunkHandler) {
-				chunkHandler(page, lastSyncedId, total, items, completeAllDialogsCallback);
+				chunkHandler(page, lastSyncedId, total, items, real_offset, completeAllDialogsCallback);
 			} else if (completeAllDialogsCallback) {
 				completeAllDialogsCallback();
 			}
@@ -70,16 +70,16 @@ function iterateDialogs(arr, count, completeDialogsCallback) {
 	}
 }
 
-function createChunkHandler(page, lastSyncedId, total, items, completeAllDialogsCallback) {
-	return function(page, lastSyncedId, total, items, completeAllDialogsCallback) {
+function createChunkHandler(page, lastSyncedId, total, items, real_offset, completeAllDialogsCallback) {
+	return function(page, lastSyncedId, total, items, real_offset, completeAllDialogsCallback) {
 		reportStatus('sync', undefined, total);
 
-		iterateDialogs(items, page * VK.MAX_DIALOGS_ON_PAGE, function() {
+		iterateDialogs(items, lastSyncedId ? total - page * VK.MAX_DIALOGS_ON_PAGE + real_offset : page * VK.MAX_DIALOGS_ON_PAGE, function() {
 			setTimeout(function() {
 				processChunkDialogs(page + 1, lastSyncedId, createChunkHandler, completeAllDialogsCallback);
 			}, 334);
 		});
-	} (page, lastSyncedId, total, items, completeAllDialogsCallback);
+	} (page, lastSyncedId, total, items, real_offset, completeAllDialogsCallback);
 }
 
 function processDialogPage(dialogId, page, lastSyncedId, chunkHandler, completeDialogCallback) {

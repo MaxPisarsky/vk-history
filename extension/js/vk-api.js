@@ -111,7 +111,8 @@ const VK = (function() {
 		xhr.onreadystatechange = getXhrHandler(xhr, tokenCurrying(getDialogs, arguments), function(resp) {
 			var items = resp && resp.response && resp.response.items;
 			var total = resp && resp.response && resp.response.count;
-			callback && callback(total, items);
+			var real_offset = resp && resp.response && resp.response.real_offset;
+			callback && callback(total, items, real_offset);
 		});
 		xhr.open('GET', vk_api + 'messages.getDialogs?offset=' + offset + '&count=' + count + (start_message_id ? '&start_message_id=' + start_message_id : '') + '&v=5.41&access_token=' + token, true);
 		xhr.send();
