@@ -74,7 +74,7 @@ function createChunkHandler(page, lastSyncedId, total, items, real_offset, compl
 	return function(page, lastSyncedId, total, items, real_offset, completeAllDialogsCallback) {
 		reportStatus('sync', undefined, total);
 
-		iterateDialogs(items, lastSyncedId ? total - page * VK.MAX_DIALOGS_ON_PAGE + real_offset : page * VK.MAX_DIALOGS_ON_PAGE, function() {
+		iterateDialogs(items, lastSyncedId ? total - page * VK.MAX_DIALOGS_ON_PAGE - real_offset : page * VK.MAX_DIALOGS_ON_PAGE, function() {
 			setTimeout(function() {
 				processChunkDialogs(page + 1, lastSyncedId, createChunkHandler, completeAllDialogsCallback);
 			}, 334);
