@@ -15,7 +15,7 @@ function checkOptions() {
 }
 
 function openOptions() {
-	var optionsUrl = chrome.extension.getURL('options.html');
+	const optionsUrl = chrome.extension.getURL('options.html');
 	chrome.tabs.query({url: optionsUrl}, function(tabs) {
 		if (tabs.length) {
 			chrome.tabs.update(tabs[0].id, {active: true});
@@ -78,7 +78,19 @@ function showStatusBlock() {
 	});
 }
 
+function openDialogs() {
+	const dialogsUrl = chrome.extension.getURL('dialogs.html');
+	chrome.tabs.query({url: dialogsUrl}, function(tabs) {
+		if (tabs.length) {
+			chrome.tabs.update(tabs[0].id, {active: true});
+		} else {
+			chrome.tabs.create({url: dialogsUrl});
+		}
+	});
+}
+
 document.getElementById('openOptionsBtn').addEventListener('click', openOptions);
+document.getElementById('openDialogsBtn').addEventListener('click', openDialogs);
 
 checkOptions();
 

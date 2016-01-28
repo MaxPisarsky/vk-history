@@ -9,3 +9,4 @@ import "./ico/icon128.png";
 
 import "./options.html";
 import "./popup.html";
+import "./dialogs.html";
