@@ -130,6 +130,23 @@ const VK = (function() {
 		return dialogId;
 	}
 
+	function getDialogMeta(dialog) {
+		const message = dialog && dialog.message;
+		var meta = {};
+		if (message) {
+			meta.id = message.user_id;
+			if (message.chat_id) {
+				meta.id = message.chat_id + 2000000000;
+			}
+			meta.date = message.date;
+			meta.title = message.title;
+			meta.body = message.body;
+			meta.photo = message.photo_50;
+			meta.user_id = message.user_id;
+		}
+		return meta;
+	}
+
 	function getDialog(token, id, offset, count, callback, start_message_id) {
 		var xhr = new XMLHttpRequest();
 		xhr.onreadystatechange = getXhrHandler(xhr, tokenCurrying(getDialog, arguments), function(resp) {
@@ -148,6 +165,7 @@ const VK = (function() {
 		static getUser(token, callback) { getUser(token, callback); }
 		static getDialogs(token, offset, count, start_message_id, callback) { getDialogs(token, offset, count, start_message_id, callback); }
 		static getDialogId(dialog) { return getDialogId(dialog); }
+		static getDialogMeta(dialog) { return getDialogMeta(dialog); }
 		static getDialog(token, id, offset, count, start_message_id, callback) { getDialog(token, id, offset, count, callback, start_message_id); }
 		static get MAX_DIALOGS_ON_PAGE() { return 200; }
 	};

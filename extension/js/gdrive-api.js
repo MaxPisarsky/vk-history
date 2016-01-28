@@ -47,16 +47,36 @@ const GDrive = (function() {
 				}
 			}
 		};
-		xhr.open('GET', gdrive_api + 'files?q=title+%3D+\'' + app_folder + '\'+and+mimeType+%3D+\'application%2Fvnd.google-apps.folder\'' , true);
+		xhr.open('GET', gdrive_api + 'files?q=title+%3D+\'' + app_folder + '\'+and+mimeType+%3D+\'application%2Fvnd.google-apps.folder\'', true);
 		xhr.setRequestHeader('Authorization', 'Bearer ' + token);
 		xhr.send();
 	}
 
-	function createFile(token, filename, folder, content, callback) {
+	function checkFile(token, name, callback) {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState === 4 && xhr.status === 200) {
+				var resp = JSON.parse(xhr.responseText);
+				if (resp.items.length === 0) {
+					callback && callback(false);
+				} else {
+					var id = resp && resp.items && resp.items[0] && resp.items[0].id;
+					fid = id;
+					callback && callback(true, id);
+				}
+			}
+		};
+		xhr.open('GET', gdrive_api + 'files?q=title+%3D+\'' + name + '\'+and+\'' + fid + '\'+in+parents', true);
+		xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+		xhr.send();
+	}
+
+	function createOrUpdateFile(token, filename, folder, content, id, callback) {
 		const boundary = '-------314159265358979323846';
 		const delimiter = '\r\n--' + boundary + '\r\n';
 		const close_delim = '\r\n--' + boundary + '--';
 		const contentType = 'application/json';
+		const func = id ? createOrUpdateDataFileChecked : createDataFileChecked;
 
 		var metadata = {
 			'title': filename,
@@ -84,11 +104,11 @@ const GDrive = (function() {
 				resp = JSON.parse(xhr.responseText);
 				if (resp && resp.error && resp.error.errors && resp.error.errors.length && resp.error.errors[0].reason === 'notFound') {
 					fid = undefined;
-					createDataFileChecked(token, filename, folder, content, callback);
+					func(token, filename, folder, content, callback);
 				}
 			}
 		};
-		xhr.open('POST', gdrive_upload_api + '?visibility=PRIVATE&uploadType=multipart' , true);
+		xhr.open(id ? 'PUT' : 'POST', gdrive_upload_api + (id ? '/' + id : '') + '?visibility=PRIVATE&uploadType=multipart' , true);
 		xhr.setRequestHeader('Authorization', 'Bearer ' + token);
 		xhr.setRequestHeader('Content-type', 'multipart/related; boundary=\'' + boundary + '\'');
 		xhr.send(multipartRequestBody);
@@ -96,10 +116,24 @@ const GDrive = (function() {
 
 	function createDataFileChecked(token, filename, content, callback) {
 		if (fid) {
-			createFile(token, filename, fid, content, callback);
+			createOrUpdateFile(token, filename, fid, content, undefined, callback);
 		} else {
 			checkDataFolder(token, function(fid) {
-				createFile(token, filename, fid, content, callback);
+				createOrUpdateFile(token, filename, fid, content, undefined, callback);
+			});
+		}
+	}
+
+	function createOrUpdateDataFileChecked(token, filename, content, callback) {
+		if (fid) {
+			checkFile(token, filename, function(result, id) {
+				createOrUpdateFile(token, filename, fid, content, result ? id : undefined, callback);
+			});
+		} else {
+			checkDataFolder(token, function(fid) {
+				checkFile(token, filename, function(result, id) {
+					createOrUpdateFile(token, filename, fid, content, result ? id : undefined, callback);
+				});
 			});
 		}
 	}
@@ -108,6 +142,7 @@ const GDrive = (function() {
 		static checkAuth(tokenCallback) { checkAuth(tokenCallback); }
 		static checkDataFolder(token, callback) { checkDataFolder(token, callback); }
 		static createDataFile(token, filename, content, callback) { createDataFileChecked(token, filename, content, callback); }
+		static createOrUpdateDataFile(token, filename, content, callback) { createOrUpdateDataFileChecked(token, filename, content, callback); }
 	};
 }());
 

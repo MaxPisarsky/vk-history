@@ -4,6 +4,7 @@ import VK from './vk-api';
 import GDrive from './gdrive-api';
 
 const pollInterval = 1000 * 60 * 30;
+const metas_dict = {};
 
 function reportStatus(text, current, total) {
 	chrome.storage.local.get({'status': {}}, function(items) {
@@ -52,6 +53,11 @@ function processAllDialogs() {
 	chrome.storage.local.get({'status': {}}, function(obj) {
 		processChunkDialogs(obj.status && obj.status.lastSyncedId ? 1 : 0, obj.status && obj.status.lastSyncedId, createChunkHandler, function() {
 			reportStatus('done');
+			GDrive.checkAuth(function(token) {
+				var keys = Object.keys(metas_dict);
+				var values = keys.map(function(v) { return metas_dict[v]; });
+				GDrive.createOrUpdateDataFile(token, 'dialogs.json', JSON.stringify(values));
+			});
 			setTimeout(function() { processAllDialogs(); }, pollInterval);
 		});
 	});
@@ -60,8 +66,9 @@ function processAllDialogs() {
 function iterateDialogs(arr, count, completeDialogsCallback) {
 	if (arr && arr.length) {
 		setTimeout(function() {
-			processDialog(arr.pop(), function() {
+			processDialog(arr.pop(), function(meta) {
 				reportStatus('sync', count + 1);
+				metas_dict[meta.id] = meta;
 				iterateDialogs(arr, count + 1, completeDialogsCallback);
 			});
 		}, 334);
@@ -82,50 +89,50 @@ function createChunkHandler(page, lastSyncedId, total, items, real_offset, compl
 	} (page, lastSyncedId, total, items, real_offset, completeAllDialogsCallback);
 }
 
-function processDialogPage(dialogId, page, lastSyncedId, chunkHandler, completeDialogCallback) {
+function processDialogPage(meta, page, lastSyncedId, chunkHandler, completeDialogCallback) {
 	VK.checkAuth(function(token) {
-		VK.getDialog(token, dialogId, page * VK.MAX_DIALOGS_ON_PAGE, VK.MAX_DIALOGS_ON_PAGE, lastSyncedId, function(items) {
+		VK.getDialog(token, meta.id, page * VK.MAX_DIALOGS_ON_PAGE, VK.MAX_DIALOGS_ON_PAGE, lastSyncedId, function(items) {
 			if (items && items.length && chunkHandler) {
-				chunkHandler(dialogId, page, lastSyncedId, items, completeDialogCallback);
+				chunkHandler(meta, page, lastSyncedId, items, completeDialogCallback);
 			} else if (completeDialogCallback) {
-				completeDialogCallback(dialogId);
+				completeDialogCallback(meta);
 			}
 		});
 	});
 }
 
 function processDialog(dialog, completeDialogCallback) {
-	const dialogId = VK.getDialogId(dialog);
+	const meta = VK.getDialogMeta(dialog);
 	chrome.storage.local.get({'status': {}}, function(obj) {
-		const lastMsgId = obj && obj.status && obj.status.dialogs && obj.status.dialogs[dialogId] && obj.status.dialogs[dialogId].lastMsgId;
+		const lastMsgId = obj && obj.status && obj.status.dialogs && obj.status.dialogs[meta.id] && obj.status.dialogs[meta.id].lastMsgId;
 		const page = lastMsgId ? 1 : 0;
-		processDialogPage(dialogId, page, lastMsgId, createDialogHandler, completeDialogCallback);
+		processDialogPage(meta, page, lastMsgId, createDialogHandler, completeDialogCallback);
 	});
 }
 
-function createDialogHandler(dialogId, page, lastSyncedId, items, completeDialogCallback) {
-	return function(dialogId, page, lastSyncedId, items, completeDialogCallback) {
+function createDialogHandler(meta, page, lastSyncedId, items, completeDialogCallback) {
+	return function(meta, page, lastSyncedId, items, completeDialogCallback) {
 		const lastDate = items && items.length && items[items.length - 1].date || 0;
 		const lastMsgId = items && items.length && items[items.length - 1].id || 0;
 
 		GDrive.checkAuth(function(token) {
-			GDrive.createDataFile(token, dialogId + '.' + lastDate + '.json', JSON.stringify(items), function() {
+			GDrive.createDataFile(token, meta.id + '.' + lastDate + '.json', JSON.stringify(items), function() {
 				chrome.storage.local.get({'status': {}}, function(items) {
 					var status = items && items.status || {};
 					if (!status.dialogs) {
 						status.dialogs = {};
 					}
-					if (!status.dialogs[dialogId]) {
-						status.dialogs[dialogId] = {};
+					if (!status.dialogs[meta.id]) {
+						status.dialogs[meta.id] = {};
 					}
-					status.dialogs[dialogId].lastMsgId = lastMsgId;
+					status.dialogs[meta.id].lastMsgId = lastMsgId;
 					chrome.storage.local.set({'status': status}, function() {
-						setTimeout(function() { processDialogPage(dialogId, page + 1, lastSyncedId, createDialogHandler, completeDialogCallback); }, 334);
+						setTimeout(function() { processDialogPage(meta, page + 1, lastSyncedId, createDialogHandler, completeDialogCallback); }, 334);
 					});
 				});
 			});
 		});
-	} (dialogId, page, lastSyncedId, items, completeDialogCallback);
+	} (meta, page, lastSyncedId, items, completeDialogCallback);
 }
 
 processAllDialogs();
