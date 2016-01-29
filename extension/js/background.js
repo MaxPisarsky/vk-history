@@ -50,15 +50,23 @@ function processChunkDialogs(page, lastSyncedId, chunkHandler, completeAllDialog
 }
 
 function processAllDialogs() {
-	chrome.storage.local.get({'status': {}}, function(obj) {
-		processChunkDialogs(obj.status && obj.status.lastSyncedId ? 1 : 0, obj.status && obj.status.lastSyncedId, createChunkHandler, function() {
-			reportStatus('done');
-			GDrive.checkAuth(function(token) {
-				var keys = Object.keys(metas_dict);
-				var values = keys.map(function(v) { return metas_dict[v]; });
-				GDrive.createOrUpdateDataFile(token, 'dialogs.json', JSON.stringify(values));
+	GDrive.checkAuth(function(token) {
+		GDrive.getFile(token, 'dialogs.json', function(content) {
+			if (content) {
+				content.forEach(function(dialog) {
+					metas_dict[dialog.id] = dialog;
+				});
+			}
+			
+			chrome.storage.local.get({'status': {}}, function(obj) {
+				processChunkDialogs(obj.status && obj.status.lastSyncedId ? 1 : 0, obj.status && obj.status.lastSyncedId, createChunkHandler, function() {
+					reportStatus('done');
+					var keys = Object.keys(metas_dict);
+					var values = keys.map(function(v) { return metas_dict[v]; });
+					GDrive.createOrUpdateDataFile(token, 'dialogs.json', JSON.stringify(values));
+					setTimeout(function() { processAllDialogs(); }, pollInterval);
+				});
 			});
-			setTimeout(function() { processAllDialogs(); }, pollInterval);
 		});
 	});
 }

@@ -61,7 +61,6 @@ const GDrive = (function() {
 					callback && callback(false);
 				} else {
 					var id = resp && resp.items && resp.items[0] && resp.items[0].id;
-					fid = id;
 					callback && callback(true, id);
 				}
 			}
@@ -138,11 +137,41 @@ const GDrive = (function() {
 		}
 	}
 
+	function getFileChecked(token, filename, callback) {
+		if (fid) {
+			getFile(token, filename, callback);
+		} else {
+			checkDataFolder(token, function() {
+				getFile(token, filename, callback);
+			});
+		}
+	}
+
+	function getFile(token, filename, callback) {
+		checkFile(token, filename, function(result, id) {
+			if (result) {
+				var xhr = new XMLHttpRequest();
+				xhr.onreadystatechange = function() {
+					if (xhr.readyState === 4 && xhr.status === 200) {
+						var resp = JSON.parse(xhr.responseText);
+						callback && callback(resp);
+					}
+				};
+				xhr.open('GET', gdrive_api + 'files/' + id + '?alt=media', true);
+				xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+				xhr.send();
+			} else {
+				callback && callback(undefined);
+			}
+		});
+	}
+
 	return class GDrive {
 		static checkAuth(tokenCallback) { checkAuth(tokenCallback); }
 		static checkDataFolder(token, callback) { checkDataFolder(token, callback); }
 		static createDataFile(token, filename, content, callback) { createDataFileChecked(token, filename, content, callback); }
 		static createOrUpdateDataFile(token, filename, content, callback) { createOrUpdateDataFileChecked(token, filename, content, callback); }
+		static getFile(token, filename, callback) { getFileChecked(token, filename, callback); }
 	};
 }());
 
