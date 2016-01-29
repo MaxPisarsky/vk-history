@@ -49,21 +49,38 @@ function processChunkDialogs(page, lastSyncedId, chunkHandler, completeAllDialog
 	});
 }
 
+function loadAllData(token, callback) {
+	GDrive.getFile(token, 'dialogs.json', function(content) {
+		if (content) {
+			content.forEach(function(dialog) {
+				metas_dict[dialog.id] = dialog;
+			});
+		}
+
+		GDrive.getFile(token, 'status.json', function(content) {
+			if (content && content.status) {
+				chrome.storage.local.set({'status': content.status}, function() {
+					callback && callback();
+				});
+			} else {
+				callback && callback();
+			}
+		});
+	});
+}
+
 function processAllDialogs() {
 	GDrive.checkAuth(function(token) {
-		GDrive.getFile(token, 'dialogs.json', function(content) {
-			if (content) {
-				content.forEach(function(dialog) {
-					metas_dict[dialog.id] = dialog;
-				});
-			}
-			
+		loadAllData(token, function() {
 			chrome.storage.local.get({'status': {}}, function(obj) {
 				processChunkDialogs(obj.status && obj.status.lastSyncedId ? 1 : 0, obj.status && obj.status.lastSyncedId, createChunkHandler, function() {
 					reportStatus('done');
 					var keys = Object.keys(metas_dict);
 					var values = keys.map(function(v) { return metas_dict[v]; });
 					GDrive.createOrUpdateDataFile(token, 'dialogs.json', JSON.stringify(values));
+					chrome.storage.local.get({'status': {}}, function(object) {
+						GDrive.createOrUpdateDataFile(token, 'status.json', JSON.stringify(object));
+					});
 					setTimeout(function() { processAllDialogs(); }, pollInterval);
 				});
 			});
