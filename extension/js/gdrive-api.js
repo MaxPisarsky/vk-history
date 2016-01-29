@@ -70,6 +70,23 @@ const GDrive = (function() {
 		xhr.send();
 	}
 
+	function findFiles(token, partName, callback) {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState === 4 && xhr.status === 200) {
+				var resp = JSON.parse(xhr.responseText);
+				if (resp.items.length === 0) {
+					callback && callback(false);
+				} else {
+					callback && callback(true, resp.items);
+				}
+			}
+		};
+		xhr.open('GET', gdrive_api + 'files?q=title+contains+\'' + partName + '\'+and+\'' + fid + '\'+in+parents', true);
+		xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+		xhr.send();
+	}
+
 	function createOrUpdateFile(token, filename, folder, content, id, callback) {
 		const boundary = '-------314159265358979323846';
 		const delimiter = '\r\n--' + boundary + '\r\n';
@@ -166,12 +183,72 @@ const GDrive = (function() {
 		});
 	}
 
+	function getFileById(token, id, callback) {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState === 4 && xhr.status === 200) {
+				var resp = JSON.parse(xhr.responseText);
+				callback && callback(resp);
+			}
+		};
+		xhr.open('GET', gdrive_api + 'files/' + id + '?alt=media', true);
+		xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+		xhr.send();
+	}
+
+	function getLastPartDialogChecked(token, id, callback) {
+		if (fid) {
+			getLastPartDialog(token, id, callback);
+		} else {
+			checkDataFolder(token, function() {
+				getLastPartDialog(token, id, callback);
+			});
+		}
+	}
+
+	function getLastPartDialog(token, id, callback) {
+		getNextPartDialog(token, id, -1, callback);
+	}
+
+	function getNextPartDialog(token, id, ts, callback) {
+		findFiles(token, id + '.', function(result, items) {
+			if (result) {
+				var filtered = items.filter(function(value) {
+					return value.title.startsWith(id);
+				});
+
+				filtered.sort(function(a, b) {
+					var tsA = parseInt(a.title.replace(id + '.', '').replace('.json', ''), 10);
+					var tsB = parseInt(b.title.replace(id + '.', '').replace('.json', ''), 10);
+					return tsB - tsA;
+				});
+
+				if (ts === -1) {
+					var tsL = parseInt(filtered[0].title.replace(id + '.', '').replace('.json', ''), 10);
+					getFileById(token, filtered[0].id, function(resp) { callback(tsL, resp); });
+				} else {
+					for (var i = 0, len = filtered.length; i < len; i++) {
+						var tsF = parseInt(filtered[i].title.replace(id + '.', '').replace('.json', ''), 10);
+						if (tsF < ts) {
+							getFileById(token, filtered[i].id, function(resp) { callback(tsF, resp); });
+							break;
+						}
+					}
+				}
+			} else {
+				callback();
+			}
+		});
+	}
+
 	return class GDrive {
 		static checkAuth(tokenCallback) { checkAuth(tokenCallback); }
 		static checkDataFolder(token, callback) { checkDataFolder(token, callback); }
 		static createDataFile(token, filename, content, callback) { createDataFileChecked(token, filename, content, callback); }
 		static createOrUpdateDataFile(token, filename, content, callback) { createOrUpdateDataFileChecked(token, filename, content, callback); }
 		static getFile(token, filename, callback) { getFileChecked(token, filename, callback); }
+		static getLastPartDialog(token, id, callback) { getLastPartDialogChecked(token, id, callback); }
+		static getNextPartDialog(token, id, ts, callback) { getNextPartDialog(token, id, ts, callback); }
 	};
 }());
 

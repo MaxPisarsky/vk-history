@@ -16,6 +16,26 @@ function loadAll() {
 		document.getElementById('spinner').style.display = 'none';
 	}
 
+	function showSpinner() {
+		document.getElementById('spinner').style.display = 'flex';
+	}
+
+	function hideDialogs() {
+		document.getElementById('dialogs').style.display = 'none';
+	}
+
+	function showDialogs() {
+		document.getElementById('dialogs').style.display = 'block';
+	}
+
+	function hideDialog() {
+		document.getElementById('dialog').style.display = 'none';
+	}
+
+	function showDialog() {
+		document.getElementById('dialog').style.display = 'block';
+	}
+
 	function loadAvatars(peoples) {
 		VK.getAvatars(peoples, function(p) {
 			p.forEach(function(man) {
@@ -29,6 +49,22 @@ function loadAll() {
 
 				Array.prototype.forEach.call(document.getElementsByClassName('profile-link-' + man.id), function(el) {
 					el.href = 'https://vk.com/id' + man.id;
+				});
+			});
+		});
+	}
+
+
+
+	function loadDialog(id) {
+		hideDialogs();
+		showSpinner();
+
+		GDrive.checkAuth(function(token) {
+			GDrive.getLastPartDialog(token, id, function(ts, rows) {
+				console.log(ts, rows);
+				GDrive.getNextPartDialog(token, id, ts, function(ts, rows) {
+					console.log(ts, rows);
 				});
 			});
 		});
@@ -78,6 +114,8 @@ function loadAll() {
 					row.appendChild(avaCol);
 					row.appendChild(infoCol);
 					row.appendChild(msgCol);
+
+					row.addEventListener('click', function() { loadDialog(dialog.id); });
 
 					dialogsContainer.appendChild(row);
 
