@@ -160,6 +160,16 @@ const VK = (function() {
 		xhr.send();
 	}
 
+	function getAvatars(ids, callback) {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = getXhrHandler(xhr, tokenCurrying(getAvatars, arguments), function(resp) {
+			var peoples = resp && resp.response;
+			callback && callback(peoples);
+		});
+		xhr.open('GET', vk_api + 'users.get?user_ids=' + ids.join() + '&fields=photo_50&v=5.41', true);
+		xhr.send();
+	}
+
 	return class VK {
 		static checkAuth(tokenCallback) { checkAuth(tokenCallback); }
 		static getUser(token, callback) { getUser(token, callback); }
@@ -167,6 +177,7 @@ const VK = (function() {
 		static getDialogId(dialog) { return getDialogId(dialog); }
 		static getDialogMeta(dialog) { return getDialogMeta(dialog); }
 		static getDialog(token, id, offset, count, start_message_id, callback) { getDialog(token, id, offset, count, callback, start_message_id); }
+		static getAvatars(ids, callback) { getAvatars(ids, callback); }
 		static get MAX_DIALOGS_ON_PAGE() { return 200; }
 	};
 })();
