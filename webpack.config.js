@@ -48,8 +48,6 @@ var config = {
         }, {
           test: /\.css$/, loader: extractor.extract('style-loader', 'css-loader')
         }, {
-          test: /\.(woff|woff2|eot|ttf|svg)$/, loader: 'url-loader?name=fonts/[name].[ext]&limit=100'
-        }, {
           test: /\.(png|gif)$/, loader: 'file-loader?name=ico/[name].[ext]'
         }, {
           test: /\.json$/, loader: 'file-loader?name=[name].[ext]'
