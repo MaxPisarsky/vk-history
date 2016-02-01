@@ -4,7 +4,7 @@
   "description": "Chrome extension for backup VKontakte messages",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
+    "build": "webpack --progress",
     "lint": "eslint . --ext .js || true"
   },
   "repository": {
