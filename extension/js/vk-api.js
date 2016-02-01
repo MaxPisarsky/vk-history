@@ -54,10 +54,10 @@ const VK = (function() {
 		};
 	}
 
-	function checkAuth(tokenCallback) {
+	function checkAuth(tokenCallback, selected) {
 		chrome.storage.sync.get({'vkaccess_token': {}}, function(items) {
 			if (items.vkaccess_token.length === undefined) {
-				chrome.tabs.create({url: vkAuthenticationUrl, selected: true}, function (tab) {
+				chrome.tabs.create({url: vkAuthenticationUrl, selected: selected ? true : false}, function (tab) {
 					chrome.tabs.onUpdated.addListener(listenerHandler(tab.id, tokenCallback));
 				});
 			} else {

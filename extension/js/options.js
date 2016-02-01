@@ -31,7 +31,7 @@ function restoreInfo() {
 			document.getElementById('vkName').innerHTML = info.first_name + ' ' + info.last_name;
 			document.getElementById('vkPhoto').src = info.photo_200;
 		});
-	});
+	}, true);
 
 	refreshStorage();
 }
