@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 
 	"name": "VK History Backup",
-	"description": "VK message history backup",
+	"description": "Бэкап сообщений ВКонтакте",
 	"version": "1.0",
 
 	"oauth2": {
@@ -13,8 +13,6 @@
 	},
 
 	"icons": { "128": "ico/icon128.png" },
-
-	"key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCXaBUTn1PNjYo8fg+1JBmWBA3bdrn7siqzkY0tYeuNHIWi5ji+6V5Y3QWYRFQh3AFwrZaBItvaM3fsit7K++kDoD67VhYGrGd+mjl4Htmp+/HbzzCQMBJdTdTOvR722+VHmIttzbe/I7GB3a74KvPYfUENONj1tswyKkuXeMgFOQIDAQAB",
 
 	"permissions": [
 		"storage",
