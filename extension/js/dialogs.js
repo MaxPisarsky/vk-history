@@ -96,6 +96,13 @@ function loadDialog(id, ts) {
 				infoCol.appendChild(nameRow);
 				infoCol.appendChild(dateRow);
 
+				if (msg.action && msg.action === 'chat_invite_user') {
+					if (msg.body !== '') {
+						msg.body += '\n';
+					}
+					msg.body += '<span class="name' + msg.from_id + '"></span> пригласил/а <span class="name' + msg.action_mid + '">/<span>';
+				}
+
 				var msgCol = document.createElement('div');
 				msgCol.className = 'col-xs-7 col-sm-7 col-md-8';
 				msgCol.innerHTML = msg.body.replace(/\r\n|\n/g, '<br />');
@@ -211,6 +218,8 @@ function loadAll() {
 						const btn = document.getElementById('loadMoreBtn');
 						btn.setAttribute('dialog-id', dialog.id);
 						btn.setAttribute('dialog-ts', -1);
+						const dialogContainer = document.getElementById('dialog');
+						dialogContainer.innerHTML = '';
 						loadDialog(dialog.id, -1);
 					});
 
