@@ -225,18 +225,25 @@ const GDrive = (function() {
 
 				if (ts === -1) {
 					var tsL = parseInt(filtered[0].title.replace(id + '.', '').replace('.json', ''), 10);
-					getFileById(token, filtered[0].id, function(resp) { callback(tsL, resp); });
+					getFileById(token, filtered[0].id, function(resp) { callback && callback(tsL, resp); });
 				} else {
+					var wasFind = false;
+
 					for (var i = 0, len = filtered.length; i < len; i++) {
 						var tsF = parseInt(filtered[i].title.replace(id + '.', '').replace('.json', ''), 10);
 						if (tsF < ts) {
-							getFileById(token, filtered[i].id, function(resp) { callback(tsF, resp); });
+							wasFind = true;
+							getFileById(token, filtered[i].id, function(resp) { callback && callback(tsF, resp); });
 							break;
 						}
 					}
+
+					if (!wasFind) {
+						callback && callback();
+					}
 				}
 			} else {
-				callback();
+				callback && callback();
 			}
 		});
 	}
