@@ -6,7 +6,7 @@
 	"version": "1.0",
 
 	"oauth2": {
-		"client_id": "151577150412-e2nuefi62vgk6tjg686l1n5lnage8p00.apps.googleusercontent.com",
+		"client_id": "151577150412-gt2kljlh5nl8rc32ms5slpsu2de6ct2p.apps.googleusercontent.com",
 		"scopes": [
 		  "https://www.googleapis.com/auth/drive"
 		]
