@@ -3,7 +3,7 @@
 
 	"name": "VK History Backup",
 	"description": "Бэкап сообщений ВКонтакте",
-	"version": "1.0",
+	"version": "1.0.0.1",
 
 	"oauth2": {
 		"client_id": "151577150412-gt2kljlh5nl8rc32ms5slpsu2de6ct2p.apps.googleusercontent.com",
