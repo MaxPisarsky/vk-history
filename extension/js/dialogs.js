@@ -172,12 +172,14 @@ function loadAll() {
 			hideSpinner();
 			showDialogs();
 
+			const dialogsContainer = document.getElementById('dialogs');
+			dialogsContainer.innerHTML = '';
+
 			if (content) {
 				content.sort(function(a, b) {
 					return b.date - a.date;
 				});
 
-				const dialogsContainer = document.getElementById('dialogs');
 				var peoples = [];
 				content.forEach(function(dialog) {
 					var row = document.createElement('div');
@@ -243,6 +245,8 @@ function loadAll() {
 				if (peoples.length) {
 					loadAvatars(peoples);
 				}
+			} else {
+				dialogsContainer.innerHTML = 'Первоначальная синхронизация еще не закончена. Попробуйте позже.';
 			}
 		});
 	});
